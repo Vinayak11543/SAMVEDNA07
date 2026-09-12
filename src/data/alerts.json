@@ -1,0 +1,86 @@
+[
+  {
+    "id": "AA-323",
+    "alertNumber": 240,
+    "severity": "CRITICAL",
+    "location": "Pipalkoti East, Uttarakhand",
+    "lat": 30.450,
+    "lng": 79.268,
+    "trigger": "184 mm / 24 hrs",
+    "confidence": "95",
+    "timestamp": 1788243425000,
+    "sensorId": "SNS-09"
+  },
+  {
+    "id": "AA-322",
+    "alertNumber": 239,
+    "severity": "HIGH",
+    "location": "Mawsynram Slope Monitor, Meghalaya",
+    "lat": 25.297,
+    "lng": 91.582,
+    "trigger": "168 mm / 24 hrs",
+    "confidence": "91",
+    "timestamp": 1788243365000,
+    "sensorId": "SNS-32"
+  },
+  {
+    "id": "AA-321",
+    "alertNumber": 238,
+    "severity": "CRITICAL",
+    "location": "Cherrapunji High-Surge, Meghalaya",
+    "lat": 25.263,
+    "lng": 91.732,
+    "trigger": "178 mm / 24 hrs",
+    "confidence": "96",
+    "timestamp": 1788243245000,
+    "sensorId": "SNS-30"
+  },
+  {
+    "id": "AA-320",
+    "alertNumber": 237,
+    "severity": "HIGH",
+    "location": "Haflong Hill Crest, Assam",
+    "lat": 25.174,
+    "lng": 93.023,
+    "trigger": "152 mm / 24 hrs",
+    "confidence": "89",
+    "timestamp": 1788243185000,
+    "sensorId": "SNS-27"
+  },
+  {
+    "id": "AA-319",
+    "alertNumber": 236,
+    "severity": "CRITICAL",
+    "location": "Chamoli Ridge A, Uttarakhand",
+    "lat": 30.400,
+    "lng": 79.320,
+    "trigger": "142 mm / 24 hrs",
+    "confidence": "94",
+    "timestamp": 1788243065000,
+    "sensorId": "SNS-01"
+  },
+  {
+    "id": "AA-318",
+    "alertNumber": 235,
+    "severity": "HIGH",
+    "location": "Dharamshala Slope Node, Himachal Pradesh",
+    "lat": 32.219,
+    "lng": 76.323,
+    "trigger": "138 mm / 24 hrs",
+    "confidence": "88",
+    "timestamp": 1788243005000,
+    "sensorId": "SNS-15"
+  },
+  {
+    "id": "AA-317",
+    "alertNumber": 234,
+    "severity": "HIGH",
+    "location": "Kohima North Slope, Nagaland",
+    "lat": 25.675,
+    "lng": 94.108,
+    "trigger": "136 mm / 24 hrs",
+    "confidence": "86",
+    "timestamp": 1788242945000,
+    "sensorId": "SNS-38"
+  }
+]
