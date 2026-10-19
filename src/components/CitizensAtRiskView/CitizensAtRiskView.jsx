@@ -105,7 +105,7 @@ export default function CitizensAtRiskView() {
 
     try {
       const result = await sendSmsToMyPhone(
-        `SAMVEDNA ALERT: Notification requested for ${person.name}. Status: ${person.status || 'UNKNOWN'}. Please check the SAMVEDNA dashboard.`,
+        `LANDSLIDE ALERT: PLEASE FIND A SAFE LOCATION.`,
         pin
       );
 
