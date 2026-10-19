@@ -209,30 +209,22 @@ export default function CitizensAtRiskView() {
                 </div>
 
                 <div className="citizen-area-actions">
-                  {isNotified ? (
+                  {isNotified && (
                     <span className="area-notify-status notified">
                       SMS ACCEPTED FOR YOUR PHONE
                     </span>
-                  ) : isFailed ? (
-                    <>
-                      <span className="area-notify-status failed">FAILED</span>
-                      <button
-                        className="btn-notify-area retry"
-                        onClick={() => handleNotifyArea(group)}
-                      >
-                        Retry
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className={'btn-notify-area' + (isSending ? ' sending' : '')}
-                      onClick={() => handleNotifyArea(group)}
-                      disabled={isSending}
-                      id={'notify-area-' + group.sensorId}
-                    >
-                      {isSending ? 'SENDING SMS...' : 'NOTIFY MY PHONE'}
-                    </button>
                   )}
+                  {isFailed && (
+                    <span className="area-notify-status failed">LAST SMS FAILED</span>
+                  )}
+                  <button
+                    className={'btn-notify-area' + (isSending ? ' sending' : '') + (isFailed ? ' retry' : '')}
+                    onClick={() => handleNotifyArea(group)}
+                    disabled={isSending}
+                    id={'notify-area-' + group.sensorId}
+                  >
+                    {isSending ? 'SENDING SMS...' : isFailed ? 'RETRY SMS' : 'NOTIFY MY PHONE'}
+                  </button>
                 </div>
               </div>
 
