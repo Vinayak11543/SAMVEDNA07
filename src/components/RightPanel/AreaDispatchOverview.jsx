@@ -39,6 +39,7 @@ export default function AreaDispatchOverview() {
   const setRightPanelFilter = useStore((s) => s.setRightPanelFilter);
   const setRightPanelDrilldownArea = useStore((s) => s.setRightPanelDrilldownArea);
   const setSelectedDispatchAreaId = useStore((s) => s.setSelectedDispatchAreaId);
+  const selectSensor = useStore((s) => s.selectSensor);
   const setActiveTab = useStore((s) => s.setActiveTab);
 
   const dispatchedSensorIds = Object.keys(dispatchedAreas);
@@ -79,9 +80,17 @@ export default function AreaDispatchOverview() {
     setActiveTab('dispatch');
   };
 
-  const handleDrilldown = (disp) => {
-    setRightPanelDrilldownArea(disp);
-  };
+ const handleDrilldown = (disp) => {
+  // Open the selected area's details
+  setRightPanelDrilldownArea(disp);
+
+  // Fly the map to this area's exact coordinates
+  selectSensor({
+    ...disp,
+    lat: Number(disp.lat),
+    lng: Number(disp.lng),
+  });
+};
 
   return (
     <div className="area-dispatch-overview">
