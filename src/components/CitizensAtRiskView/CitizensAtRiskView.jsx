@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import useStore from '../../store/useStore';
 import { haversineKm } from '../../utils/formatters';
 
-export default function CitizensAtRiskView({ socketRef }) {
+export default function CitizensAtRiskView() {
   const persons = useStore((s) => s.persons);
   const sensors = useStore((s) => s.sensors);
   const addToast = useStore((s) => s.addToast);
@@ -78,32 +78,70 @@ export default function CitizensAtRiskView({ socketRef }) {
     [filteredGroups]
   );
 
-  const handleNotifyPerson = useCallback((person) => {
-    addToast('SMS Alert sent to ' + person.name + ' (' + person.phone + ')');
-  }, [addToast]);
 
-  const handleNotifyArea = useCallback((group) => {
-    if (!group.citizens.length) return;
-    const socket = socketRef?.current;
-    if (!socket) {
-      markAreaNotifyFailed(group.sensorId);
-      addToast('Connection error: unable to send notifications');
-      return;
-    }
-    markAreaNotifying(group.sensorId);
-    socket.emit('notify:area', {
-      sensorId: group.sensorId,
-      areaName: group.name,
-      citizenIds: group.citizens.map((c) => c.id)
+  // Send one SMS to the phone configured on the SMSgate server environment.
+  // The destination number is fixed on the server and cannot be supplied by the browser.
+  const sendSmsToMyPhone = useCallback(async (message, pin) => {
+    const response = await fetch('/api/send-sms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ pin, message })
     });
-    // Fallback: if server does not respond in 5s, mark as notified locally
-    setTimeout(() => {
-      const current = useStore.getState().notifiedAreas[group.sensorId];
-      if (current?.status === 'sending') {
-        markAreaNotified(group.sensorId, group.citizens.length);
-      }
-    }, 5000);
-  }, [socketRef, markAreaNotifying, markAreaNotified, markAreaNotifyFailed, addToast]);
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || 'SMS request failed.');
+    }
+
+    return data;
+  }, []);
+
+  const handleNotifyPerson = useCallback(async (person) => {
+    const pin = window.prompt('Enter your SMSgate alert PIN:');
+    if (!pin) return;
+
+    try {
+      const result = await sendSmsToMyPhone(
+        `SAMVEDNA ALERT: Notification requested for ${person.name}. Status: ${person.status || 'UNKNOWN'}. Please check the SAMVEDNA dashboard.`,
+        pin
+      );
+
+      addToast(`SMS accepted by SMSgate for your phone. ID: ${result.smsId || 'queued'}.`);
+    } catch (error) {
+      addToast('SMS failed: ' + error.message);
+    }
+  }, [sendSmsToMyPhone, addToast]);
+
+  const handleNotifyArea = useCallback(async (group) => {
+    const pin = window.prompt('Enter your SMSgate alert PIN:');
+    if (!pin) return;
+
+    markAreaNotifying(group.sensorId);
+
+    try {
+      const result = await sendSmsToMyPhone(
+        `SAMVEDNA DISASTER ALERT: Notification requested for ${group.name}, ${group.place}, ${group.state}. ${group.citizens.length} citizen records are listed in this monitoring area. Please check the dashboard.`,
+        pin
+      );
+
+      // This status represents one SMS accepted for your phone, not messages sent to citizens.
+      markAreaNotified(group.sensorId, 1);
+      addToast(`SMS accepted by SMSgate for your phone. ID: ${result.smsId || 'queued'}.`);
+    } catch (error) {
+      markAreaNotifyFailed(group.sensorId);
+      addToast('SMS failed: ' + error.message);
+    }
+  }, [
+    sendSmsToMyPhone,
+    markAreaNotifying,
+    markAreaNotified,
+    markAreaNotifyFailed,
+    addToast
+  ]);
+
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -173,7 +211,7 @@ export default function CitizensAtRiskView({ socketRef }) {
                 <div className="citizen-area-actions">
                   {isNotified ? (
                     <span className="area-notify-status notified">
-                      NOTIFIED {areaNotif.count}/{areaNotif.total}
+                      SMS ACCEPTED FOR YOUR PHONE
                     </span>
                   ) : isFailed ? (
                     <>
@@ -189,13 +227,10 @@ export default function CitizensAtRiskView({ socketRef }) {
                     <button
                       className={'btn-notify-area' + (isSending ? ' sending' : '')}
                       onClick={() => handleNotifyArea(group)}
-                      disabled={citizenCount === 0 || isSending}
+                      disabled={isSending}
                       id={'notify-area-' + group.sensorId}
                     >
-                      {isSending ? 'SENDING...' : 'NOTIFY ALL'}
-                      {citizenCount > 0 && !isSending && (
-                        <span className="notify-count-badge">{citizenCount}</span>
-                      )}
+                      {isSending ? 'SENDING SMS...' : 'NOTIFY MY PHONE'}
                     </button>
                   )}
                 </div>
@@ -237,7 +272,7 @@ export default function CitizensAtRiskView({ socketRef }) {
                           className="btn-citizen-action"
                           onClick={() => handleNotifyPerson(person)}
                         >
-                          Send Alert SMS
+                          Send SMS to My Phone
                         </button>
                       </div>
                     </div>
