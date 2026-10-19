@@ -2,7 +2,6 @@ import React from 'react';
 import useSocket from './hooks/useSocket';
 import useStore from './store/useStore';
 import TopBar from './components/TopBar';
-import LeftPanel from './components/LeftPanel/LeftPanel';
 import RightPanel from './components/RightPanel/RightPanel';
 import CesiumMap from './components/CesiumMap/CesiumMap';
 import SensorDashboard from './components/SensorDashboard/SensorDashboard';
