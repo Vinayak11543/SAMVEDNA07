@@ -95,35 +95,54 @@ export default function CesiumMap({ socketRef }) {
   }, []);
 
   // Handle flyTo when selection changes
+  
+  // Handle map navigation when an impacted area is selected
   useEffect(() => {
     const viewer = viewerRef.current;
-    if (!viewer) return;
+
+    if (!viewer || viewer.isDestroyed()) return;
 
     let target = null;
-    let height = 8000;
-    if (selectedAlert) {
-      target = { lng: selectedAlert.lng, lat: selectedAlert.lat };
-    } else if (selectedPerson) {
-      target = { lng: selectedPerson.lng, lat: selectedPerson.lat };
+    let height = 5000;
+
+    if (selectedAlert?.lat != null && selectedAlert?.lng != null) {
+      target = { lat: Number(selectedAlert.lat), lng: Number(selectedAlert.lng) };
+    } else if (selectedPerson?.lat != null && selectedPerson?.lng != null) {
+      target = { lat: Number(selectedPerson.lat), lng: Number(selectedPerson.lng) };
+      height = 2500;
     } else if (selectedUnit?.currentPosition) {
-      target = { lng: selectedUnit.currentPosition[0], lat: selectedUnit.currentPosition[1] };
-    } else if (selectedSensor) {
-      target = { lng: selectedSensor.lng, lat: selectedSensor.lat };
-      height = 12000;
+      target = {
+        lng: Number(selectedUnit.currentPosition[0]),
+        lat: Number(selectedUnit.currentPosition[1]),
+      };
+      height = 3000;
+    } else if (selectedSensor?.lat != null && selectedSensor?.lng != null) {
+      target = {
+        lat: Number(selectedSensor.lat),
+        lng: Number(selectedSensor.lng),
+      };
+      height = 3500;
     }
 
-    if (target) {
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(target.lng, target.lat, height),
-        orientation: {
-          heading: Cesium.Math.toRadians(0),
-          pitch: Cesium.Math.toRadians(-55),
-          roll: 0
-        },
-        duration: 1.2
-      });
+    if (!target || !Number.isFinite(target.lat) || !Number.isFinite(target.lng)) {
+      return;
     }
+
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(
+        target.lng,
+        target.lat,
+        height
+      ),
+      orientation: {
+        heading: 0,
+        pitch: Cesium.Math.toRadians(-65),
+        roll: 0,
+      },
+      duration: 1.5,
+    });
   }, [selectedAlert, selectedPerson, selectedUnit, selectedSensor]);
+
 
   return (
     <div className="map-container" id="map-container">
