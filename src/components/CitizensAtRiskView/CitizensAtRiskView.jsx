@@ -123,7 +123,7 @@ export default function CitizensAtRiskView() {
 
     try {
       const result = await sendSmsToMyPhone(
-        `SAMVEDNA DISASTER ALERT: Notification requested for ${group.name}, ${group.place}, ${group.state}. ${group.citizens.length} citizen records are listed in this monitoring area. Please check the dashboard.`,
+        `LANDSLIDE ALERT: PLEASE FIND A SAFE LOCATION.`,
         pin
       );
 
