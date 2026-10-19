@@ -12,9 +12,7 @@ import Toast from './components/Toast';
 export default function App() {
   const socketRef = useSocket();
   const activeTab = useStore((s) => s.activeTab);
-  const leftCollapsed = useStore((s) => s.leftCollapsed);
   const rightCollapsed = useStore((s) => s.rightCollapsed);
-  const toggleLeft = useStore((s) => s.toggleLeft);
   const toggleRight = useStore((s) => s.toggleRight);
   const sensors = useStore((s) => s.sensors);
   const alerts = useStore((s) => s.alerts);
@@ -32,15 +30,6 @@ export default function App() {
           className="app-main dashboard-view-container"
           style={{ display: activeTab === 'dashboard' ? 'flex' : 'none' }}
         >
-          <LeftPanel collapsed={leftCollapsed} />
-
-          <button
-            className={`panel-toggle left ${leftCollapsed ? 'collapsed' : ''}`}
-            onClick={toggleLeft}
-            title={leftCollapsed ? 'Show panel' : 'Hide panel'}
-          >
-            {leftCollapsed ? '>' : '<'}
-          </button>
 
           <div className="center-column">
             <CesiumMap socketRef={socketRef} />
