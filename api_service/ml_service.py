@@ -3,6 +3,12 @@ ml_service.py — ML inference and sensor registry service for SAMVEDNA API
 """
 
 import os
+import sys
+# Ensure api_service directory is on sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
 import json
 import logging
 import datetime
