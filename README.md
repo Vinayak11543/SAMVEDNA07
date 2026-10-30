@@ -45,7 +45,21 @@ A 3D command and control center for real-time disaster monitoring, geotechnical 
 
 ---
 
-## 🚀 Instant Deployment on Vercel
+## 🌐 Instant Python Backend Deployment on Render
+
+Deploy the FastAPI ML & Geospatial microservice with one click using Render Blueprints:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Vinayak11543/SAMVEDNA07/tree/ai-upgrade)
+
+Or manual setup:
+1. Go to [Render Dashboard](https://dashboard.render.com).
+2. Click **New +** > **Web Service**.
+3. Select `Vinayak11543/SAMVEDNA07`, branch `ai-upgrade`.
+4. Render automatically reads [`render.yaml`](render.yaml) / [`Dockerfile`](Dockerfile) and deploys on the free tier.
+
+---
+
+## 🚀 Instant Frontend Deployment on Vercel
 
 ### Option 1: Vercel Dashboard (Recommended)
 1. Push this repository to your GitHub account.
