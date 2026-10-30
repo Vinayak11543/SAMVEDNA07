@@ -11,8 +11,8 @@
 
 import { computeRiskEstimate, computeHazardEnvelope } from '../utils/riskEstimator';
 
-const RAW_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const API_BASE_URL = RAW_API_URL.replace(/\/+$/, '');
+const RAW_API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:8000');
+const API_BASE_URL = RAW_API_URL ? RAW_API_URL.replace(/\/+$/, '') : '';
 const CACHE_TTL_MS = 15000; // 15 seconds
 
 // In-memory caches

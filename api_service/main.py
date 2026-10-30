@@ -6,8 +6,11 @@ import os
 import sys
 # Ensure api_service directory is on sys.path for both local and cloud root execution
 current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 import logging
 import datetime
@@ -247,4 +250,4 @@ async def get_operational_intelligence():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)
+    uvicorn.run("api_service.main:app", host=settings.HOST, port=settings.PORT, reload=True, app_dir=parent_dir)
