@@ -5,6 +5,7 @@ import {
   getInitialPersons,
   getInitialAlerts
 } from '../data/clientSimulator';
+import { getSensorPrediction, getSensorImpactZones } from '../services/apiClient';
 
 const INITIAL_DISPATCHED = {
   'SNS-02': {
@@ -102,13 +103,8 @@ const useStore = create((set, get) => ({
 
   selectedSensor: null,
   /**
-   * FIX Problem 1: selectSensor now also sets activeImpactSensor and
-   * selectedDispatchAreaId so that PredictionCard, HazardPolygon and
-   * AIDispatchView all stay in sync with the selected sensor.
-   *
-   * Synthetic state-center-* sensors (from SensorDashboard handleStateClick)
-   * do NOT update activeImpactSensor or selectedDispatchAreaId because they
-   * are camera-navigation helpers, not real monitoring stations.
+   * selectSensor: Updates activeImpactSensor, selectedDispatchAreaId,
+   * and triggers real-time API prediction + DEM impact zone fetch.
    */
   selectSensor: (sensor) => {
     const isSynthetic = sensor && sensor.id && sensor.id.startsWith('state-center-');
@@ -122,6 +118,27 @@ const useStore = create((set, get) => ({
       updates.activeImpactSensor = sensor;
       updates.showPrediction = true;
       updates.selectedDispatchAreaId = sensor.id;
+      updates.apiPredictionLoading = true;
+      updates.apiPredictionError = null;
+
+      // Trigger async API prediction with stale response protection
+      getSensorPrediction(sensor)
+        .then((pred) => {
+          if (pred && !pred.isStale && get().activeImpactSensor?.id === sensor.id) {
+            set({ apiPrediction: pred, apiPredictionLoading: false });
+            return getSensorImpactZones(sensor, pred);
+          }
+        })
+        .then((zones) => {
+          if (zones && get().activeImpactSensor?.id === sensor.id) {
+            set({ apiImpactZones: zones });
+          }
+        })
+        .catch((err) => {
+          if (get().activeImpactSensor?.id === sensor.id) {
+            set({ apiPredictionLoading: false, apiPredictionError: err.message });
+          }
+        });
     }
     set(updates);
   },
@@ -141,17 +158,29 @@ const useStore = create((set, get) => ({
     impactZone: true,
     sensors: true,
     dispatchUnits: true,
-    persons: true
+    persons: true,
+    hazardPolygon: true
   },
   toggleLayer: (layer) => set((s) => ({
     layers: { ...s.layers, [layer]: !s.layers[layer] }
   })),
 
-  // Prediction card & impact sensor (defaults to open Reni Village as shown in reference video)
+  // Prediction card & impact sensor
   showPrediction: true,
   setShowPrediction: (show) => set({ showPrediction: show }),
   activeImpactSensor: DEFAULT_RENI_SENSOR,
-  setActiveImpactSensor: (activeImpactSensor) => set({ activeImpactSensor, showPrediction: true }),
+  setActiveImpactSensor: (sensor) => {
+    get().selectSensor(sensor);
+  },
+
+  // API State
+  apiPrediction: null,
+  apiPredictionLoading: false,
+  apiPredictionError: null,
+  apiImpactZones: null,
+  setApiPrediction: (apiPrediction) => set({ apiPrediction }),
+  setApiPredictionLoading: (apiPredictionLoading) => set({ apiPredictionLoading }),
+  setApiImpactZones: (apiImpactZones) => set({ apiImpactZones }),
 
   // Panel collapse
   leftCollapsed: false,
@@ -160,12 +189,12 @@ const useStore = create((set, get) => ({
   toggleRight: () => set((s) => ({ rightCollapsed: !s.rightCollapsed })),
 
   // Right Panel & Dispatch State
-  rightPanelFilter: 'all', // 'all' | 'no-dispatch' | 'dispatched'
+  rightPanelFilter: 'all',
   setRightPanelFilter: (filter) => set({ rightPanelFilter: filter }),
-  rightPanelDrilldownArea: null, // area object or null
+  rightPanelDrilldownArea: null,
   setRightPanelDrilldownArea: (area) => set({ rightPanelDrilldownArea: area }),
 
-  // Dispatched areas map: keyed by sensorId
+  // Dispatched areas map
   dispatchedAreas: INITIAL_DISPATCHED,
   dispatchArea: (area, totalUnits, breakdown) => set((s) => {
     const sensorId = area.id || area.sensorId || 'SNS-02';
@@ -204,8 +233,7 @@ const useStore = create((set, get) => ({
   selectedDispatchAreaId: 'SNS-02',
   setSelectedDispatchAreaId: (id) => set({ selectedDispatchAreaId: id }),
 
-  // Citizen area notification state: keyed by sensorId
-  // Values: { status: 'idle' | 'sending' | 'notified' | 'failed', count: number, total: number }
+  // Citizen area notification state
   notifiedAreas: {},
   markAreaNotifying: (sensorId) => set((s) => ({
     notifiedAreas: {

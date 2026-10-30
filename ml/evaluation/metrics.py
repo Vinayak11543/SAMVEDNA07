@@ -173,3 +173,4 @@ def plot_evaluation_curves(
     figures_saved["calibration_curve"] = calib_path
 
     return figures_saved
+

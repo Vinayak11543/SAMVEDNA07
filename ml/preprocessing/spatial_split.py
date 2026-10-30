@@ -96,3 +96,4 @@ class SpatialTemporalSplitter:
         )
 
         return train_df, test_df, metadata
+

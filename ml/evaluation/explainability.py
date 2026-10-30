@@ -83,3 +83,4 @@ def compute_shap_explanations(
         "feature_importance_ranking": ranking_dict,
         "top_features": [f[0] for f in feature_ranking[:5]],
     }
+

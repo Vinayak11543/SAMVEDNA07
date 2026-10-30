@@ -100,3 +100,4 @@ To augment the dataset with NRSC/ISRO records:
 2. Export to `ml/data/raw/nrsc_landslide_atlas.csv`.
 3. Required columns: `event_id`, `latitude`, `longitude`, `state`, `district`, `year`, `landslide_type`.
 4. Rerun `python ml/training/train_xgboost.py`. The pipeline automatically detects, validates, and merges the records.
+

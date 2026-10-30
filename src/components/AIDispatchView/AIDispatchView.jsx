@@ -55,6 +55,7 @@ export default function AIDispatchView({ socketRef }) {
   const addToast = useStore((s) => s.addToast);
   const selectedDispatchAreaId = useStore((s) => s.selectedDispatchAreaId);
   const setSelectedDispatchAreaId = useStore((s) => s.setSelectedDispatchAreaId);
+  const selectSensor = useStore((s) => s.selectSensor);
 
   const [searchArea, setSearchArea] = useState('');
   const [resources, setResources] = useState(INITIAL_RESOURCES);
@@ -226,7 +227,10 @@ export default function AIDispatchView({ socketRef }) {
                 <div
                   key={area.id}
                   className={`dispatch-area-card ${isSelected ? 'selected' : ''} ${isCritical ? 'critical' : ''}`}
-                  onClick={() => setSelectedDispatchAreaId(area.id)}
+                  onClick={() => {
+                    setSelectedDispatchAreaId(area.id);
+                    selectSensor(area);
+                  }}
                   id={`area-select-${area.id}`}
                 >
                   <div className="area-card-top">

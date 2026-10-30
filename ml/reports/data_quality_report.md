@@ -112,3 +112,4 @@ To eliminate leakage:
    - **Eastern Himalayas & Northeast Region (NER)** (Longitude $> 86.0^\circ$E: Sikkim, Assam, Meghalaya, Arunachal Pradesh, Nagaland, Mizoram)
 2. **Spatial Exclusion Buffer:** A strict **15.0 km exclusion buffer** is enforced around all test coordinates. Any training samples falling within 15.0 km of a test coordinate are purged from the training set.
 3. **Temporal Holdout:** Recent historical events are evaluated against models trained on preceding temporal windows.
+

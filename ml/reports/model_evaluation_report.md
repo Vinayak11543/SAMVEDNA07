@@ -96,3 +96,4 @@ All evaluation plots have been saved to `ml/reports/figures/`:
 1. **Inclinometer Tilt Integration:** In the offline training dataset, ground inclinometer tilt is marked as missing (`NaN`) because satellite inventory databases do not have downhole sensors. During real-time API inference (Phase C), when physical telemetry tilt is provided, it is ingested through the preprocessor's missing-indicator channel.
 2. **Micro-topography & Anthropogenic Cuts:** Road cuts and unchecked excavation below 30m resolution may induce localized failures not captured by regional 30m DEM derivatives.
 3. **Warning Classification:** In the user-facing interface, risk levels must be presented as **probabilistic assessments** with stated confidence intervals, never as absolute physical certainties.
+
