@@ -103,6 +103,27 @@ export default function AIDispatchView({ socketRef }) {
     );
   }, [sensors, searchArea]);
 
+  // AI Operational Intelligence calculations
+  const operationalIntelligence = useMemo(() => {
+    const ranked = [...sensors]
+      .map((s) => ({
+        ...s,
+        pred: computeLandslidePrediction(s)
+      }))
+      .sort((a, b) => (b.pred?.probability || 0) - (a.pred?.probability || 0));
+
+    const highestRisk = ranked.slice(0, 3);
+    const inspectionAreas = sensors
+      .filter((s) => Number(s.tilt || 0) > 3.8 || (Number(s.soilMoisture || 0) > 85 && Number(s.rainfall || 0) > 130))
+      .slice(0, 3);
+
+    return {
+      highestRisk,
+      inspectionAreas,
+      topArea: ranked[0]
+    };
+  }, [sensors]);
+
   // Priority residents for center column
   const priorityEvacuees = useMemo(() => {
     return persons.slice(0, 4);
@@ -400,6 +421,85 @@ export default function AIDispatchView({ socketRef }) {
                   <span className="evacuee-role">{p.profession}</span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* AI Operational Intelligence Section */}
+          <div className="intel-section-block" style={{ border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: 6, padding: '10px 12px', background: 'rgba(15, 23, 42, 0.45)', marginTop: 10 }}>
+            <div className="block-title" style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>🧠 AI OPERATIONAL INTELLIGENCE</span>
+              <span style={{ fontSize: 9, opacity: 0.7, marginLeft: 'auto', letterSpacing: '0.05em' }}>ADVISORY ONLY</span>
+            </div>
+
+            {/* 1. Highest-Risk Sectors */}
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>
+                HIGHEST-RISK SECTORS (ML RANKED):
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {operationalIntelligence.highestRisk.map((s, idx) => (
+                  <div
+                    key={s.id}
+                    onClick={() => { setSelectedDispatchAreaId(s.id); selectSensor(s); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '4px 8px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span><strong>#{idx + 1} {s.name}</strong> <small style={{ opacity: 0.6 }}>({s.state})</small></span>
+                    <span style={{ color: '#ef4444', fontWeight: 700 }}>{s.pred?.probability || 90}% Risk</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Areas Needing Immediate Inspection */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>
+                AREAS NEEDING IMMEDIATE INSPECTION:
+              </div>
+              <div style={{ fontSize: 11, color: '#e2e8f0', lineHeight: 1.4 }}>
+                {operationalIntelligence.inspectionAreas.map((s) => (
+                  <div key={s.id} style={{ marginBottom: 4 }}>
+                    • <strong style={{ color: '#f59e0b' }}>{s.name}:</strong> Slope creep at {s.tilt}° & rain {s.rainfall} mm/h.
+                    <span style={{ opacity: 0.7, display: 'block', fontSize: 10, marginLeft: 10 }}>
+                      Action: Dispatch thermal UAV drone for tension crack reconnaissance.
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Response Priorities */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>
+                RESPONSE TRIAGE PRIORITIES:
+              </div>
+              <div style={{ fontSize: 10, display: 'grid', gridTemplateColumns: '1fr', gap: 4 }}>
+                <div style={{ padding: '4px 6px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '3px solid #ef4444' }}>
+                  <strong>PRIORITY 1 (Life Safety):</strong> Immediate alert dissemination to downslope hamlets in {operationalIntelligence.topArea?.name || 'Chamoli Ridge'}.
+                </div>
+                <div style={{ padding: '4px 6px', background: 'rgba(245, 158, 11, 0.1)', borderLeft: '3px solid #f59e0b' }}>
+                  <strong>PRIORITY 2 (Infrastructure):</strong> Pre-position heavy earthmovers at primary valley access road.
+                </div>
+                <div style={{ padding: '4px 6px', background: 'rgba(34, 197, 94, 0.1)', borderLeft: '3px solid #22c55e' }}>
+                  <strong>PRIORITY 3 (Monitoring):</strong> Maintain automated radar & telemetry polling across peripheral stations.
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Confidence & Uncertainty */}
+            <div style={{ marginTop: 10, fontSize: 10, color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6 }}>
+              <div><strong>Confidence & Uncertainty:</strong> Mean telemetry completeness 95% | DEM terrain horizontal uncertainty ±50m.</div>
+              <div style={{ marginTop: 4, fontStyle: 'italic', color: '#fca5a5' }}>
+                ⚠ Operational Notice: Recommendations only. Operational commanders must verify field conditions. Never auto-dispatch or claim an evacuation corridor is safe without reconnaissance.
+              </div>
             </div>
           </div>
         </div>

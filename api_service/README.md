@@ -52,3 +52,4 @@ Retrieves prediction for a specific station from the 41-station registry.
 
 ### 5. `GET /api/impact-zones/{sensor_id}`
 Retrieves pre-calculated terrain runout GeoJSON for any station (`SNS-01` to `SNS-41`).
+

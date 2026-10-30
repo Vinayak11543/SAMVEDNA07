@@ -272,3 +272,4 @@ class MLInferenceService:
 
 
 ml_service = MLInferenceService()
+
