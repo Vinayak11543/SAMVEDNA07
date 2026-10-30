@@ -187,3 +187,4 @@ This recomputes stratified spatial splits (15 km buffer), performs 45-fit Random
    - In production, set `CORS_ORIGINS` to your exact Vercel frontend domain (e.g. `https://samvedna07.vercel.app`) rather than wildcard `*`.
 3. **Graceful Fallback:**
    - If the API microservice is down, unreachable, or returns an error, the frontend does not freeze or crash; it seamlessly falls back to the client-side rule-based estimator and informs the operator with a visual fallback indicator.
+
