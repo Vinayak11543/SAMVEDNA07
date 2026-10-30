@@ -1,0 +1,81 @@
+{
+  "model_name": "SAMVEDNA XGBoost Landslide Risk Model",
+  "model_version": "1.0.0",
+  "training_timestamp_utc": "2026-10-30T10:58:54.085141+00:00",
+  "algorithm": "XGBoost Classifier (Gradient Boosted Decision Trees)",
+  "framework_versions": {
+    "xgboost": "3.4.1",
+    "scikit_learn": "1.4.2",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3"
+  },
+  "dataset_provenance": {
+    "primary_inventory": "NASA Global Landslide Catalog (GLC) / COOLR",
+    "region": "India (Himalayan Arc, Western Ghats, Northeast India)",
+    "dem_source": "Copernicus / SRTM 30m Digital Elevation Model",
+    "weather_reanalysis": "Open-Meteo Historical Archive (GPM IMERG / ERA5)",
+    "non_landslide_sampling": "Spatially buffered (>3 km) negative sampling across stable baseline topography",
+    "train_samples": 504,
+    "test_samples": 187,
+    "leakage_prevention": "Geographic block holdout with 15 km spatial exclusion buffer"
+  },
+  "features": {
+    "input_raw_features": [
+      "rainfall_intensity_mm_h",
+      "rainfall_1h_mm",
+      "rainfall_3h_mm",
+      "rainfall_24h_mm",
+      "antecedent_rainfall_7d_mm",
+      "soil_moisture_pct",
+      "elevation_m",
+      "slope_deg",
+      "aspect_deg",
+      "plan_curvature",
+      "profile_curvature",
+      "distance_to_drainage_m",
+      "ground_tilt_deg",
+      "land_cover",
+      "geology"
+    ],
+    "transformed_feature_count": 27,
+    "top_shap_features": [
+      "feat_7",
+      "feat_5",
+      "feat_3",
+      "feat_6",
+      "feat_4"
+    ]
+  },
+  "best_hyperparameters": {
+    "subsample": 1.0,
+    "n_estimators": 100,
+    "min_child_weight": 1,
+    "max_depth": 5,
+    "learning_rate": 0.03,
+    "gamma": 0.1,
+    "colsample_bytree": 0.8
+  },
+  "evaluation_metrics_holdout": {
+    "evaluation_threshold": 0.5,
+    "test_samples": 187,
+    "true_positives": 63,
+    "false_positives": 11,
+    "true_negatives": 109,
+    "false_negatives": 4,
+    "accuracy": 0.9198,
+    "precision": 0.8514,
+    "recall_sensitivity": 0.9403,
+    "specificity": 0.9083,
+    "f1_score": 0.8936,
+    "roc_auc": 0.9674,
+    "pr_auc": 0.9079,
+    "brier_score_loss": 0.0628,
+    "positive_class_ratio": 0.3583
+  },
+  "artifacts": {
+    "model_file": "ml/models/landslide_xgb_model.json",
+    "preprocessor_file": "ml/models/preprocessor.joblib",
+    "metadata_file": "ml/models/model_metadata.json"
+  },
+  "status": "VALIDATED_TRAINED_MODEL_AVAILABLE"
+}
