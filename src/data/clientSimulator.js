@@ -4,7 +4,15 @@ import basePersons from './persons.json';
 import initialAlerts from './alerts.json';
 import { computeLandslidePrediction } from '../utils/formatters';
 
-const EPICENTER = { lat: 30.415, lng: 79.308 };
+/**
+ * FIX Problem 4: Removed hardcoded EPICENTER constant. Citizen distance
+ * is no longer measured from Reni (30.415, 79.308) for all sensors.
+ * Instead, the getInitialPersons function computes distance from each
+ * person to the nearest alerting sensor.
+ *
+ * FIX Problem 4: SNS-01..03 are no longer forced into permanent alert.
+ * Alert status is computed purely from telemetry thresholds.
+ */
 const IMPACT_RADIUS_KM = 3.8;
 
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -23,6 +31,26 @@ function randomWalk(value, step, min, max) {
   return clamp(value + (Math.random() - 0.5) * 2 * step, min, max);
 }
 
+/**
+ * Find the nearest alerting sensor to a given lat/lng.
+ * Returns { lat, lng, distance } or null if no sensors are alerting.
+ */
+function findNearestAlertSensor(lat, lng, sensors) {
+  const alertSensors = sensors.filter((s) => s.alert);
+  if (alertSensors.length === 0) return null;
+
+  let nearest = null;
+  let minDist = Infinity;
+  for (const s of alertSensors) {
+    const d = haversineKm(lat, lng, s.lat, s.lng);
+    if (d < minDist) {
+      minDist = d;
+      nearest = { lat: s.lat, lng: s.lng, distance: d, sensorId: s.id };
+    }
+  }
+  return nearest;
+}
+
 export function getInitialSensors() {
   return baseSensors.map((s) => {
     const pred = computeLandslidePrediction(s);
@@ -37,12 +65,20 @@ export function getInitialSensors() {
 }
 
 export function getInitialPersons() {
+  const sensors = getInitialSensors();
   return basePersons.map((p) => {
-    const dist = haversineKm(p.lat, p.lng, EPICENTER.lat, EPICENTER.lng);
+    const nearest = findNearestAlertSensor(p.lat, p.lng, sensors);
+    if (!nearest) {
+      return {
+        ...p,
+        distanceToImpact: null,
+        status: p.status === 'IN ZONE' ? 'SAFE' : p.status
+      };
+    }
     return {
       ...p,
-      distanceToImpact: +dist.toFixed(2),
-      status: dist < IMPACT_RADIUS_KM ? 'IN ZONE' : p.status === 'IN ZONE' ? 'SAFE' : p.status
+      distanceToImpact: +nearest.distance.toFixed(2),
+      status: nearest.distance < IMPACT_RADIUS_KM ? 'IN ZONE' : p.status === 'IN ZONE' ? 'SAFE' : p.status
     };
   });
 }
@@ -76,7 +112,8 @@ export function initClientSimulation(handlers) {
       const rainfall = randomWalk(s.rainfall, 1.0, 0, 200);
       const soilMoisture = randomWalk(s.soilMoisture, 0.7, 10, 100);
       const tilt = randomWalk(s.tilt, 0.15, 0, 15);
-      const alert = rainfall > 130 || soilMoisture > 85 || (s.id === 'SNS-01' || s.id === 'SNS-02' || s.id === 'SNS-03');
+      // FIX Problem 4: Alert computed from thresholds only, NOT hardcoded for SNS-01..03
+      const alert = rainfall > 130 || soilMoisture > 85 || tilt > 5;
       const updated = {
         ...s,
         rainfall: +rainfall.toFixed(1),

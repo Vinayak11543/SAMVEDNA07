@@ -1,6 +1,7 @@
 import React from 'react';
 import useStore from '../../store/useStore';
 import { computeLandslidePrediction } from '../../utils/formatters';
+import { computeImpactSummary } from '../../utils/riskEstimator';
 
 export default function PredictionCard() {
   const setShowPrediction = useStore((s) => s.setShowPrediction);
@@ -17,8 +18,10 @@ export default function PredictionCard() {
   const isCritical = prediction?.isCritical ?? true;
   const riskProb = prediction ? prediction.probability + '%' : '95%';
 
-  const impactKm2 = '14.0';
-  const affectedPop = '315';
+  // FIX Problem 3: Dynamic impact area and population per sensor, not hardcoded
+  const impact = computeImpactSummary(activeImpactSensor);
+  const impactKm2 = impact?.areaKm2 != null ? impact.areaKm2.toFixed(1) : 'unavailable';
+  const affectedPop = impact?.estimatedPopulation != null ? String(impact.estimatedPopulation) : 'unavailable';
 
   return (
     <div className="prediction-card" id="prediction-card">
@@ -53,20 +56,34 @@ export default function PredictionCard() {
       </div>
       <div className="prediction-stat">
         <span className="prediction-stat-label">Est. Impact Area</span>
-        <span className="prediction-stat-value">{impactKm2} km²</span>
+        <span className="prediction-stat-value">
+          {impactKm2 !== 'unavailable' ? `${impactKm2} km²` : <span style={{ opacity: 0.5 }}>unavailable</span>}
+        </span>
       </div>
       <div className="prediction-stat">
         <span className="prediction-stat-label">Est. Affected Population</span>
-        <span className="prediction-stat-value">~{affectedPop} persons</span>
+        <span className="prediction-stat-value">
+          {affectedPop !== 'unavailable' ? `~${affectedPop} persons` : <span style={{ opacity: 0.5 }}>unavailable</span>}
+        </span>
       </div>
       <div className="prediction-stat">
         <span className="prediction-stat-label">Operational Model</span>
-        <span className="prediction-stat-value">CrisisCore XGBoost [NER]</span>
+        <span className="prediction-stat-value" style={{ fontSize: 10 }}>
+          {prediction?.modelName || 'Rule-based risk estimator (simulated telemetry)'}
+        </span>
+      </div>
+      <div className="prediction-stat">
+        <span className="prediction-stat-label">Data Completeness</span>
+        <span className="prediction-stat-value">{prediction?.confidence ?? 0}%</span>
       </div>
 
       <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
-        Real-time telemetry from station {activeImpactSensor?.id || 'SNS-03'} in {sensorState}.
-        Threshold warning active for terrain slope instability and debris runoff.
+        Simulated Telemetry from station {activeImpactSensor?.id || 'SNS-03'} in {sensorState}.
+        {impact?.isPlaceholder && (
+          <span style={{ display: 'block', marginTop: 4, fontStyle: 'italic', opacity: 0.7 }}>
+            {impact.label}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -1,17 +1,6 @@
 import React, { useMemo } from 'react';
 import useStore from '../../store/useStore';
 
-const STATE_CENTERS = {
-  'Uttarakhand': { lng: 79.32, lat: 30.40, height: 45000 },
-  'Himachal Pradesh': { lng: 77.17, lat: 31.85, height: 75000 },
-  'Sikkim': { lng: 88.55, lat: 27.40, height: 60000 },
-  'Assam': { lng: 92.80, lat: 26.20, height: 120000 },
-  'Meghalaya': { lng: 91.50, lat: 25.50, height: 80000 },
-  'Arunachal Pradesh': { lng: 93.60, lat: 27.50, height: 150000 },
-  'Nagaland': { lng: 94.20, lat: 25.90, height: 70000 },
-  'Mizoram': { lng: 92.75, lat: 23.50, height: 80000 },
-};
-
 export default function SensorDashboard() {
   const sensors = useStore((s) => s.sensors);
   const alerts = useStore((s) => s.alerts);
@@ -62,17 +51,15 @@ export default function SensorDashboard() {
     return sensors.filter((s) => (s.state || 'Uttarakhand') === selectedState);
   }, [sensors, selectedState]);
 
+  /**
+   * FIX Problem 5: handleStateClick no longer calls selectSensor with a
+   * synthetic state-center-* object. Instead, it just sets the selectedState
+   * and lets SelectedAreaHighlight handle the camera flight. This eliminates
+   * the camera race between selectSensor flyTo and SelectedAreaHighlight flyTo.
+   */
   const handleStateClick = (state) => {
     setSelectedState(state);
-    if (state !== 'All States' && STATE_CENTERS[state]) {
-      const center = STATE_CENTERS[state];
-      selectSensor({
-        id: `state-center-${state}`,
-        name: `${state} Regional Center`,
-        lat: center.lat,
-        lng: center.lng,
-      });
-    }
+    // Camera navigation is handled by SelectedAreaHighlight — no selectSensor call
   };
 
   return (
@@ -82,7 +69,7 @@ export default function SensorDashboard() {
         {/* Panel Header */}
         <div className="sensor-dashboard-header">
           <div className="dashboard-section-title">
-            <span>📡 LIVE SENSOR TELEMETRY & PLACES</span>
+            <span>📡 SIMULATED TELEMETRY & PLACES</span>
             <span className="sensor-count-badge">
               {filteredSensors.length} / {sensors.length} Stations Active
             </span>
@@ -222,4 +209,3 @@ export default function SensorDashboard() {
     </div>
   );
 }
-

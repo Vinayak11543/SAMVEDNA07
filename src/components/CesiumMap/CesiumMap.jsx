@@ -38,9 +38,14 @@ export default function CesiumMap({ socketRef }) {
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return;
 
-    Cesium.Ion.defaultAccessToken =
-      import.meta.env.VITE_CESIUM_ION_TOKEN ||
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6Im5ENW1mZk0xbTRMNU1iaFYiLCJqdGkiOiI1OTBjODAyMi1mMTQ2LTQ2NjEtODVjMy0zNTMwYTc0NGZlZDgiLCJpZCI6NDc3Njk1LCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODgyNDM0MjV9.QGlZYEhCUtHQ6rjye1L78CHWWyL8ZOe951z5GPtaaPI';
+    const cesiumToken = import.meta.env.VITE_CESIUM_ION_TOKEN;
+    if (!cesiumToken) {
+      console.warn(
+        '[SAMVEDNA] VITE_CESIUM_ION_TOKEN is not set. ' +
+        'Add it to your .env file (see .env.example). The map may not load correctly.'
+      );
+    }
+    Cesium.Ion.defaultAccessToken = cesiumToken || '';
 
     const viewer = new Cesium.Viewer(containerRef.current, {
       terrain: Cesium.Terrain.fromWorldTerrain(),

@@ -2,12 +2,20 @@ import { useEffect, useRef } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../../store/useStore';
 
+/**
+ * FIX Problem 5: SensorMarkers now has a click handler that calls
+ * selectSensor when a sensor marker is clicked. Labels also update
+ * correctly when the selected state changes (via in-place property updates).
+ */
 export default function SensorMarkers({ viewer }) {
   const entityMapRef = useRef(new Map());
+  const handlerRef = useRef(null);
   const sensors = useStore((s) => s.sensors);
   const selectedState = useStore((s) => s.selectedState);
-  // selectSensor
+  const selectSensor = useStore((s) => s.selectSensor);
+  const setActiveImpactSensor = useStore((s) => s.setActiveImpactSensor);
 
+  // Main entity creation & update effect
   useEffect(() => {
     if (!viewer || viewer.isDestroyed() || !sensors || sensors.length === 0) return;
 
@@ -38,6 +46,8 @@ export default function SensorMarkers({ viewer }) {
         : Cesium.Color.TRANSPARENT;
       const pixelSize = isMatchState ? (sensor.alert ? 11 : 7) : 4;
       const outlineWidth = isMatchState ? (sensor.alert ? 2.5 : 1.5) : 0;
+      // FIX: Update label text on state change
+      const labelText = isMatchState ? sensor.name : '';
 
       let entity = currentMap.get(sensor.id);
 
@@ -48,6 +58,10 @@ export default function SensorMarkers({ viewer }) {
           entity.point.outlineColor = outlineColor;
           entity.point.pixelSize = pixelSize;
           entity.point.outlineWidth = outlineWidth;
+        }
+        // FIX: Also update label text on state change
+        if (entity.label) {
+          entity.label.text = labelText;
         }
       } else {
         // Create entity once
@@ -65,7 +79,7 @@ export default function SensorMarkers({ viewer }) {
             scaleByDistance: new Cesium.NearFarScalar(1000, 1.1, 100000, 0.5)
           },
           label: {
-            text: isMatchState ? sensor.name : '',
+            text: labelText,
             font: 'bold 10px Inter, sans-serif',
             fillColor: Cesium.Color.WHITE,
             outlineColor: Cesium.Color.BLACK,
@@ -84,6 +98,43 @@ export default function SensorMarkers({ viewer }) {
 
     viewer.scene.requestRender();
   }, [viewer, sensors, selectedState]);
+
+  // Click handler for sensor marker clicks
+  useEffect(() => {
+    if (!viewer || viewer.isDestroyed()) return;
+
+    // Avoid duplicate handlers
+    if (handlerRef.current) {
+      try { handlerRef.current.destroy(); } catch (_) {}
+    }
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction((click) => {
+      try {
+        const picked = viewer.scene.pick(click.position);
+        if (Cesium.defined(picked) && picked.id) {
+          const entityId = typeof picked.id === 'string' ? picked.id : (picked.id.id || '');
+          if (entityId.startsWith('sensor-')) {
+            const sensorId = entityId.replace('sensor-', '');
+            const currentSensors = useStore.getState().sensors;
+            const sensor = currentSensors.find((s) => s.id === sensorId);
+            if (sensor) {
+              selectSensor(sensor);
+            }
+          }
+        }
+      } catch (_) {}
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    handlerRef.current = handler;
+
+    return () => {
+      try {
+        if (handlerRef.current) handlerRef.current.destroy();
+      } catch (_) {}
+      handlerRef.current = null;
+    };
+  }, [viewer, selectSensor, setActiveImpactSensor]);
 
   // Cleanup on unmount
   useEffect(() => {

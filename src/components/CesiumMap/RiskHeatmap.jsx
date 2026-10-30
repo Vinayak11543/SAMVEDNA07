@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as Cesium from 'cesium';
+import useStore from '../../store/useStore';
 
 
 // Generate a risk heatmap as a canvas image
@@ -39,8 +40,16 @@ function generateHeatmapCanvas(width = 512, height = 512) {
   return canvas;
 }
 
+/**
+ * FIX Problem 3: RiskHeatmap now centers on the active impact sensor,
+ * not hardcoded to the Chamoli bounding box. Falls back to Chamoli
+ * coordinates if no sensor is selected.
+ */
 export default function RiskHeatmap({ viewer }) {
   const layerRef = useRef(null);
+  const activeImpactSensor = useStore((s) => s.activeImpactSensor);
+  const sensorLat = activeImpactSensor?.lat;
+  const sensorLng = activeImpactSensor?.lng;
 
   useEffect(() => {
     if (!viewer || viewer.isDestroyed()) return;
@@ -51,11 +60,15 @@ export default function RiskHeatmap({ viewer }) {
       const canvas = generateHeatmapCanvas();
       const dataUrl = canvas.toDataURL('image/png');
 
-      // Bounding box around Chamoli region
-      const west = 79.18;
-      const south = 30.32;
-      const east = 79.46;
-      const north = 30.50;
+      // Center heatmap on active sensor, or default to Chamoli region
+      const centerLat = Number.isFinite(sensorLat) ? sensorLat : 30.41;
+      const centerLng = Number.isFinite(sensorLng) ? sensorLng : 79.32;
+      const spread = 0.14; // ~14 km in each direction
+
+      const west = centerLng - spread;
+      const south = centerLat - spread;
+      const east = centerLng + spread;
+      const north = centerLat + spread;
 
       try {
         const provider = await Cesium.SingleTileImageryProvider.fromUrl(dataUrl, {
@@ -82,7 +95,7 @@ export default function RiskHeatmap({ viewer }) {
         layerRef.current = null;
       }
     };
-  }, [viewer]);
+  }, [viewer, sensorLat, sensorLng]);
 
   return null;
 }

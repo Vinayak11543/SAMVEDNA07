@@ -67,8 +67,14 @@ export function clockTime() {
 
 /**
  * Compute landslide prediction from sensor telemetry.
- * Uses the CrisisCore ML Geotechnical inference logic so dashboard area cards,
- * the map prediction card, and the AI Dispatch Center stay in synchronized real-time.
+ *
+ * ALWAYS recomputes from the current telemetry values — never uses cached
+ * landslideProbability. This is a rule-based estimator on simulated telemetry,
+ * NOT a trained ML model.
+ *
+ * FIX: Previously, if sensor.landslideProbability was set, the function
+ * returned that cached value forever. Now it always recomputes from the
+ * live rainfall, soilMoisture and tilt values.
  */
 export function computeLandslidePrediction(sensor) {
   if (!sensor) return null;
@@ -78,35 +84,29 @@ export function computeLandslidePrediction(sensor) {
   const tilt = Number(sensor.tilt || 0);
   const alert = Boolean(sensor.alert);
 
-  let probability;
-  let riskLevel;
-  let confidence;
-
-  if (typeof sensor.landslideProbability === 'number' && sensor.landslideProbability > 0) {
-    probability = sensor.landslideProbability;
-    riskLevel = sensor.riskLevel || (
-      probability >= 85 ? 'CRITICAL' :
-      probability >= 70 ? 'HIGH' :
-      probability >= 50 ? 'MEDIUM' : 'LOW'
-    );
-    confidence = sensor.confidence || Math.round(82 + Math.min(16, Math.abs(probability - 50) * 0.32));
+  // Always recompute — never use a cached landslideProbability
+  const isCritical = alert || rainfall > 100 || soilMoisture > 85 || tilt > 5;
+  let raw;
+  if (isCritical) {
+    raw = 80 + (rainfall - 100) * 0.12 + soilMoisture * 0.05 + tilt * 0.4;
   } else {
-    const isCritical = alert || rainfall > 100 || soilMoisture > 85 || tilt > 5;
-    let raw;
-    if (isCritical) {
-      raw = 80 + (rainfall - 100) * 0.12 + soilMoisture * 0.05 + tilt * 0.4;
-    } else {
-      raw = rainfall * 0.38 + soilMoisture * 0.22 + tilt * 1.5;
-    }
-    probability = Math.min(99, Math.max(5, Math.round(raw)));
-    riskLevel =
-      probability >= 85 ? 'CRITICAL' :
-      probability >= 70 ? 'HIGH' :
-      probability >= 50 ? 'MEDIUM' : 'LOW';
-    confidence = Math.round(82 + Math.min(16, Math.abs(probability - 50) * 0.32));
+    raw = rainfall * 0.38 + soilMoisture * 0.22 + tilt * 1.5;
   }
+  const probability = Math.min(99, Math.max(5, Math.round(raw)));
 
-  const isCritical = riskLevel === 'CRITICAL';
+  const riskLevel =
+    probability >= 85 ? 'CRITICAL' :
+    probability >= 70 ? 'HIGH' :
+    probability >= 50 ? 'MEDIUM' : 'LOW';
+
+  // Data completeness as confidence (not model confidence)
+  let channelsPresent = 0;
+  if (Number.isFinite(Number(sensor.rainfall))) channelsPresent++;
+  if (Number.isFinite(Number(sensor.soilMoisture))) channelsPresent++;
+  if (Number.isFinite(Number(sensor.tilt))) channelsPresent++;
+  const confidence = Math.round((channelsPresent / 3) * 100);
+
+  const isCrit = riskLevel === 'CRITICAL';
   const threatClass =
     riskLevel === 'CRITICAL' ? 'threat-critical' :
     riskLevel === 'HIGH' ? 'threat-high' :
@@ -119,24 +119,24 @@ export function computeLandslidePrediction(sensor) {
 
   let dynamicAssessment = '';
   if (riskLevel === 'CRITICAL') {
-    dynamicAssessment = `Precipitation of ${rainfall.toFixed(1)} mm/h and soil pore saturation of ${soilMoisture.toFixed(1)}% have breached critical geotechnical stability thresholds. Slope tilt at ${tilt.toFixed(2)}° indicates active shear deformation and imminent slope failure risk.`;
+    dynamicAssessment = `Simulated telemetry: rainfall ${rainfall.toFixed(1)} mm/h, soil moisture ${soilMoisture.toFixed(1)}%, ground tilt ${tilt.toFixed(2)}°. Rule-based score exceeds critical threshold.`;
   } else if (riskLevel === 'HIGH') {
-    dynamicAssessment = `Elevated precipitation of ${rainfall.toFixed(1)} mm/h and soil moisture at ${soilMoisture.toFixed(1)}%. Inclinometer displacement at ${tilt.toFixed(2)}° indicates heightened slope creep. Rapid deployment advised.`;
+    dynamicAssessment = `Simulated telemetry: rainfall ${rainfall.toFixed(1)} mm/h, soil moisture ${soilMoisture.toFixed(1)}%, ground tilt ${tilt.toFixed(2)}°. Rule-based score indicates elevated risk.`;
   } else if (riskLevel === 'MEDIUM') {
-    dynamicAssessment = `Moderate precipitation of ${rainfall.toFixed(1)} mm/h with ${soilMoisture.toFixed(1)}% soil moisture. Slope inclinometer at ${tilt.toFixed(2)}°. Intensified automated monitoring active.`;
+    dynamicAssessment = `Simulated telemetry: rainfall ${rainfall.toFixed(1)} mm/h, soil moisture ${soilMoisture.toFixed(1)}%, ground tilt ${tilt.toFixed(2)}°. Moderate risk score.`;
   } else {
-    dynamicAssessment = `Precipitation at ${rainfall.toFixed(1)} mm/h and soil saturation at ${soilMoisture.toFixed(1)}% are within stable operational baselines. Slope tilt of ${tilt.toFixed(2)}° reflects geological equilibrium.`;
+    dynamicAssessment = `Simulated telemetry: rainfall ${rainfall.toFixed(1)} mm/h, soil moisture ${soilMoisture.toFixed(1)}%, ground tilt ${tilt.toFixed(2)}°. Score within stable range.`;
   }
 
   return {
     probability,
     riskLevel,
     confidence,
-    isCritical,
+    isCritical: isCrit,
     threatClass,
     threatLabel,
     dynamicAssessment,
-    modelName: 'CrisisCore XGBoost Geotechnical Model'
+    modelName: 'Rule-based risk estimator (simulated telemetry)'
   };
 }
 

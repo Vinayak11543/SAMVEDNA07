@@ -101,7 +101,30 @@ const useStore = create((set, get) => ({
   selectUnit: (unit) => set({ selectedUnit: unit, selectedAlert: null, selectedPerson: null, selectedSensor: null }),
 
   selectedSensor: null,
-  selectSensor: (sensor) => set({ selectedSensor: sensor, selectedAlert: null, selectedPerson: null, selectedUnit: null }),
+  /**
+   * FIX Problem 1: selectSensor now also sets activeImpactSensor and
+   * selectedDispatchAreaId so that PredictionCard, HazardPolygon and
+   * AIDispatchView all stay in sync with the selected sensor.
+   *
+   * Synthetic state-center-* sensors (from SensorDashboard handleStateClick)
+   * do NOT update activeImpactSensor or selectedDispatchAreaId because they
+   * are camera-navigation helpers, not real monitoring stations.
+   */
+  selectSensor: (sensor) => {
+    const isSynthetic = sensor && sensor.id && sensor.id.startsWith('state-center-');
+    const updates = {
+      selectedSensor: sensor,
+      selectedAlert: null,
+      selectedPerson: null,
+      selectedUnit: null
+    };
+    if (!isSynthetic && sensor) {
+      updates.activeImpactSensor = sensor;
+      updates.showPrediction = true;
+      updates.selectedDispatchAreaId = sensor.id;
+    }
+    set(updates);
+  },
 
   // State filtering & panel expansion
   selectedState: 'All States',

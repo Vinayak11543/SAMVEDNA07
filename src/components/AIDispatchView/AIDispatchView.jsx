@@ -80,10 +80,15 @@ export default function AIDispatchView({ socketRef }) {
     );
   }, [sensors, selectedDispatchAreaId]);
 
-  // Real-time ML Prediction for the selected monitoring area
+  // Real-time prediction for the selected monitoring area
   const currentPrediction = useMemo(() => {
     return computeLandslidePrediction(currentArea);
   }, [currentArea]);
+
+  // FIX Problem 3: Compute active warning zones dynamically from sensors
+  const activeWarningCount = useMemo(() => {
+    return sensors.filter((s) => s.alert).length;
+  }, [sensors]);
 
   // Filtered areas for left column
   const filteredAreas = useMemo(() => {
@@ -181,7 +186,8 @@ export default function AIDispatchView({ socketRef }) {
           </div>
           <div className="header-stat-chip warning-chip">
             <span className="stat-label">Active Warning Zones:</span>
-            <strong className="stat-val">21</strong>
+            {/* FIX Problem 3: Dynamic count from live sensor alert states */}
+            <strong className="stat-val">{activeWarningCount}</strong>
           </div>
         </div>
       </div>
@@ -252,7 +258,7 @@ export default function AIDispatchView({ socketRef }) {
                             : '#22c55e'
                         }}
                       >
-                        ML: {areaPred.probability}%
+                        Risk: {areaPred.probability}%
                       </span>
                     )}
                   </div>
@@ -317,7 +323,7 @@ export default function AIDispatchView({ socketRef }) {
                 {currentPrediction ? `${currentPrediction.probability}%` : '94%'}
               </div>
               <div className="metric-sub-note">
-                Confidence: {currentPrediction?.confidence || 94}%, {currentPrediction?.modelName || 'ML Geotechnical model'}
+                Data completeness: {currentPrediction?.confidence || 0}% | {currentPrediction?.modelName || 'Rule-based risk estimator (simulated telemetry)'}
               </div>
             </div>
           </div>
@@ -329,7 +335,7 @@ export default function AIDispatchView({ socketRef }) {
             </div>
             <p className="block-content">
               {currentPrediction?.dynamicAssessment || (
-                `Precipitation of ${currentArea.rainfall || 102.8} mm/h and soil saturation of ${currentArea.soilMoisture || 98.3}% have breached critical stability thresholds. Slope tilt at ${currentArea.tilt || 12.73}° indicates active sheer deformation.`
+                `Simulated telemetry: rainfall ${currentArea.rainfall || 102.8} mm/h, soil moisture ${currentArea.soilMoisture || 98.3}%, ground tilt ${currentArea.tilt || 12.73}°.`
               )}
             </p>
           </div>
@@ -371,7 +377,8 @@ export default function AIDispatchView({ socketRef }) {
               <div className="block-title">
                 CITIZENS IN IMPACT ZONE
               </div>
-              <span className="pop-est">Est. Population: 450</span>
+              {/* FIX Problem 3: Population is unavailable — no longer hardcoded 450 */}
+              <span className="pop-est">Est. Population: <span style={{ opacity: 0.5, fontStyle: 'italic' }}>unavailable</span></span>
             </div>
 
             <div className="priority-evacuees-sub">
